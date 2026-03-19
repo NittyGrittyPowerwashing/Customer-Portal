@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fleet Service Portal</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#fff;--bg2:#f7f7f6;--bg3:#f0efec;
+  --text:#1a1a18;--text2:#5f5e5a;--text3:#888780;
+  --border:#e0dfd8;--border2:#c8c7c0;
+  --blue:#185fa5;--blue-bg:#e6f1fb;--blue-text:#0c447c;
+  --green:#3b6d11;--green-bg:#eaf3de;--green-text:#27500a;
+  --amber:#854f0b;--amber-bg:#faeeda;--amber-text:#633806;
+  --red:#a32d2d;--red-bg:#fcebeb;--red-text:#791f1f;
+  --radius:8px;--radius-lg:12px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg3);color:var(--text);font-size:14px;line-height:1.5}
+.topbar{background:var(--blue);padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.brand{font-size:16px;font-weight:600;color:#fff}
+.brand-sub{font-size:12px;color:#b5d4f4;margin-top:2px}
+.app{max-width:1200px;margin:0 auto;padding:1rem}
+.card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1rem}
+.card-head{font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;padding-bottom:0.65rem;border-bottom:0.5px solid var(--border);margin-bottom:0.85rem;display:flex;justify-content:space-between;align-items:center}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:1rem}
+.metric{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:1rem}
+.metric-label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px}
+.metric-val{font-size:22px;font-weight:600;color:var(--text)}
+.metric-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.metric.blue .metric-val{color:var(--blue)}
+.metric.green .metric-val{color:var(--green)}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:0.85rem;align-items:center}
+.filters select,.filters input{font-size:13px;padding:7px 10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;font-size:13px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);cursor:pointer;transition:all 0.12s}
+.btn:hover{background:var(--bg2)}
+.btn.primary{background:var(--blue);color:#fff;border-color:transparent}
+.btn.sm{padding:5px 10px;font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:11px;font-weight:500;color:var(--text2);padding:8px;border-bottom:0.5px solid var(--border);text-transform:uppercase;letter-spacing:0.4px;white-space:nowrap;cursor:pointer;user-select:none}
+th:hover{color:var(--text)}
+th.sorted{color:var(--blue)}
+td{padding:8px;border-bottom:0.5px solid var(--border);color:var(--text);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg2)}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:var(--radius);font-size:11px;font-weight:500}
+.badge.yes{background:var(--green-bg);color:var(--green-text)}
+.badge.no{background:var(--bg2);color:var(--text3)}
+.empty{text-align:center;padding:3rem;color:var(--text3);font-size:13px}
+.photo-strip{display:flex;gap:4px;flex-wrap:wrap}
+.photo-thumb{width:40px;height:40px;border-radius:4px;object-fit:cover;cursor:pointer;border:0.5px solid var(--border)}
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:1000;padding:1rem}
+.modal{background:var(--bg);border-radius:var(--radius-lg);max-width:900px;width:100%;max-height:90vh;overflow-y:auto;padding:1.5rem}
+.modal-close{float:right;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text2)}
+.service-tag{display:inline-flex;padding:2px 8px;border-radius:var(--radius);font-size:11px;background:var(--blue-bg);color:var(--blue-text);margin:2px}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg3);padding:1rem}
+.login-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:2rem;width:100%;max-width:400px}
+.chart-bar{background:var(--blue-bg);border-radius:4px;height:24px;min-width:4px;transition:width 0.3s;display:flex;align-items:center;padding:0 8px}
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:1rem}
+.summary-item{background:var(--bg2);border-radius:var(--radius);padding:0.75rem;display:flex;flex-direction:column;gap:4px}
+@media(max-width:700px){.metrics{grid-template-columns:1fr 1fr}.filters{flex-direction:column;align-items:stretch}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="login-screen">
+  <div class="login-card">
+    <div style="width:48px;height:48px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;margin-bottom:1rem">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    </div>
+    <div style="font-size:20px;font-weight:600;margin-bottom:4px">Fleet Service Portal</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:1.5rem">Nitty Gritty Powerwashing & Mobile Services</div>
+    <div id="login-error" style="background:var(--red-bg);color:var(--red-text);border:0.5px solid #f09595;border-radius:var(--radius);padding:10px;font-size:13px;margin-bottom:1rem;display:none"></div>
+    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:0.75rem">
+      <label style="font-size:13px;font-weight:500;color:var(--text2)">Organization</label>
+      <select id="login-customer" style="font-size:15px;padding:10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none">
+        <option value="">Select your organization...</option>
+        <option value="TXDOT">TXDOT</option>
+        <option value="LISD">Lewisville ISD (LISD)</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:1rem">
+      <label style="font-size:13px;font-weight:500;color:var(--text2)">Access PIN</label>
+      <input id="login-pin" type="password" placeholder="Enter your PIN" style="font-size:15px;padding:10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button onclick="doLogin()" id="login-btn" style="width:100%;padding:12px;font-size:15px;font-weight:500;background:var(--blue);color:#fff;border:none;border-radius:var(--radius);cursor:pointer">Sign in</button>
+    <div style="margin-top:1rem;font-size:12px;color:var(--text3);text-align:center">Contact Nitty Gritty Powerwashing for your PIN<br>(817) 851-5140 · lwallace@nittygrittypowerwashing.com</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="main-app" style="display:none">
+  <div class="topbar">
+    <div>
+      <div class="brand" id="portal-title">Fleet Service Portal</div>
+      <div class="brand-sub">Nitty Gritty Powerwashing & Mobile Services · (817) 851-5140</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <div style="font-size:12px;color:#b5d4f4" id="last-updated"></div>
+      <button class="btn sm" onclick="exportCSV()" style="background:rgba(255,255,255,0.15);color:#fff;border-color:rgba(255,255,255,0.3)">Export CSV</button>
+      <button class="btn sm" onclick="doLogout()" style="background:rgba(255,255,255,0.15);color:#fff;border-color:rgba(255,255,255,0.3)">Sign out</button>
+    </div>
+  </div>
+
+  <div class="app">
+    <!-- Summary metrics -->
+    <div class="metrics">
+      <div class="metric blue"><div class="metric-label">Total vehicles serviced</div><div class="metric-val" id="m-total">0</div><div class="metric-sub" id="m-period">All time</div></div>
+      <div class="metric green"><div class="metric-label">Total billed</div><div class="metric-val" id="m-billed">$0</div><div class="metric-sub">Current filter</div></div>
+      <div class="metric"><div class="metric-label">Service days</div><div class="metric-val" id="m-days">0</div><div class="metric-sub">Unique dates</div></div>
+      <div class="metric"><div class="metric-label">Sites serviced</div><div class="metric-val" id="m-sites">0</div><div class="metric-sub">Locations</div></div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card">
+      <div class="card-head">Filter & sort records</div>
+      <div class="filters">
+        <select id="f-site" onchange="applyFilters()">
+          <option value="">All sites</option>
+        </select>
+        <select id="f-dow" onchange="applyFilters()">
+          <option value="">All days of week</option>
+          <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+          <option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option>
+        </select>
+        <select id="f-vtype" onchange="applyFilters()">
+          <option value="">All vehicle types</option>
+        </select>
+        <select id="f-service" onchange="applyFilters()">
+          <option value="">All services</option>
+          <option value="exterior">Exterior Wash</option>
+          <option value="interior">Interior Clean</option>
+          <option value="undercarriage">Under Carriage</option>
+          <option value="motor">Motor Wash</option>
+          <option value="shampoo">Shampoo</option>
+          <option value="tar">Tar / Insect Removal</option>
+          <option value="mud">Mud / Odor Scrub</option>
+        </select>
+        <input type="date" id="f-date-from" onchange="applyFilters()" placeholder="From date" style="width:150px">
+        <input type="date" id="f-date-to" onchange="applyFilters()" placeholder="To date" style="width:150px">
+        <input type="text" id="f-vnum" oninput="applyFilters()" placeholder="Search vehicle #" style="width:160px">
+        <button class="btn sm" onclick="clearFilters()">Clear filters</button>
+      </div>
+    </div>
+
+    <!-- Records table -->
+    <div class="card">
+      <div class="card-head">
+        <span>Service records (<span id="record-count">0</span>)</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn sm" onclick="toggleView('table')" id="btn-table">Table</button>
+          <button class="btn sm" onclick="toggleView('summary')" id="btn-summary">Summary</button>
+        </div>
+      </div>
+
+      <!-- TABLE VIEW -->
+      <div id="view-table">
+        <div style="overflow-x:auto">
+          <table id="records-table">
+            <thead>
+              <tr>
+                <th onclick="sortBy('date')">Date <span id="sort-date"></span></th>
+                <th onclick="sortBy('dayOfWeek')">Day <span id="sort-dayOfWeek"></span></th>
+                <th onclick="sortBy('site')">Site <span id="sort-site"></span></th>
+                <th onclick="sortBy('vehicleNum')">Vehicle # <span id="sort-vehicleNum"></span></th>
+                <th onclick="sortBy('vehicleType')">Type <span id="sort-vehicleType"></span></th>
+                <th>License Plate</th>
+                <th>Services</th>
+                <th onclick="sortBy('total')">Total <span id="sort-total"></span></th>
+                <th>Photos</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody id="records-body">
+              <tr><td colspan="10" class="empty">Loading records...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SUMMARY VIEW -->
+      <div id="view-summary" style="display:none">
+        <div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:0.75rem;text-transform:uppercase;letter-spacing:0.4px">Services breakdown</div>
+        <div id="service-summary"></div>
+        <div style="font-size:13px;font-weight:500;color:var(--text2);margin:1rem 0 0.75rem;text-transform:uppercase;letter-spacing:0.4px">By day of week</div>
+        <div id="dow-summary"></div>
+        <div style="font-size:13px;font-weight:500;color:var(--text2);margin:1rem 0 0.75rem;text-transform:uppercase;letter-spacing:0.4px">By site</div>
+        <div id="site-summary"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PHOTO MODAL -->
+<div class="modal-overlay" id="photo-modal" style="display:none" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, collection, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCMNLAJUfR3V7yMligwQaSJdXxCcqbPrY4",
+  authDomain: "nitty-gritty-powerwashing.firebaseapp.com",
+  projectId: "nitty-gritty-powerwashing",
+  storageBucket: "nitty-gritty-powerwashing.firebasestorage.app",
+  messagingSenderId: "986314109748",
+  appId: "1:986314109748:web:ba478d72b78e2385d5eb61"
+};
+
+// Customer PINs — change these to whatever you want
+const CUSTOMER_PINS = {
+  TXDOT: '8821',
+  LISD: '4453',
+  Other: '9900'
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let currentCustomer = null;
+let allRecords = [];
+let filtered = [];
+let sortField = 'date';
+let sortDir = -1;
+let currentView = 'table';
+
+window.doLogin = function() {
+  const customer = document.getElementById('login-customer').value;
+  const pin = document.getElementById('login-pin').value.trim();
+  if (!customer) { showErr('Please select your organization'); return; }
+  if (!pin) { showErr('Please enter your PIN'); return; }
+  if (CUSTOMER_PINS[customer] !== pin) { showErr('Incorrect PIN. Contact Nitty Gritty Powerwashing for access.'); return; }
+  currentCustomer = customer;
+  localStorage.setItem('ng-portal-session', JSON.stringify({customer,pin}));
+  showApp();
+}
+
+function showErr(msg) { const el=document.getElementById('login-error'); el.textContent=msg; el.style.display='block'; }
+
+window.doLogout = function() {
+  currentCustomer=null; localStorage.removeItem('ng-portal-session');
+  document.getElementById('main-app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('login-pin').value='';
+  document.getElementById('login-error').style.display='none';
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('main-app').style.display='block';
+  document.getElementById('portal-title').textContent=currentCustomer+' — Fleet Service Portal';
+  startListener();
+}
+
+function startListener() {
+  onSnapshot(collection(db,'fleet_records'), snap => {
+    allRecords = snap.docs.map(d=>({id:d.id,...d.data()})).filter(r=>r.customer===currentCustomer);
+    populateFilterOptions();
+    applyFilters();
+    document.getElementById('last-updated').textContent='Updated '+new Date().toLocaleTimeString();
+  });
+}
+
+function populateFilterOptions() {
+  const sites=[...new Set(allRecords.map(r=>r.site).filter(Boolean))].sort();
+  const vtypes=[...new Set(allRecords.map(r=>r.vehicleType).filter(Boolean))].sort();
+  const fSite=document.getElementById('f-site');
+  const curSite=fSite.value;
+  fSite.innerHTML='<option value="">All sites</option>'+sites.map(s=>`<option value="${s}">${s}</option>`).join('');
+  fSite.value=curSite;
+  const fVtype=document.getElementById('f-vtype');
+  const curVtype=fVtype.value;
+  fVtype.innerHTML='<option value="">All vehicle types</option>'+vtypes.map(v=>`<option value="${v}">${v}</option>`).join('');
+  fVtype.value=curVtype;
+}
+
+window.applyFilters = function() {
+  const fSite=document.getElementById('f-site').value;
+  const fDow=document.getElementById('f-dow').value;
+  const fVtype=document.getElementById('f-vtype').value;
+  const fService=document.getElementById('f-service').value;
+  const fFrom=document.getElementById('f-date-from').value;
+  const fTo=document.getElementById('f-date-to').value;
+  const fVnum=(document.getElementById('f-vnum').value||'').toLowerCase();
+  filtered=allRecords.filter(r=>{
+    if(fSite&&r.site!==fSite) return false;
+    if(fDow&&r.dayOfWeek!==fDow) return false;
+    if(fVtype&&r.vehicleType!==fVtype) return false;
+    if(fService&&!(r.services&&r.services[fService])) return false;
+    if(fFrom&&r.date<fFrom) return false;
+    if(fTo&&r.date>fTo) return false;
+    if(fVnum&&!(r.vehicleNum||'').toLowerCase().includes(fVnum)&&!(r.licensePlate||'').toLowerCase().includes(fVnum)) return false;
+    return true;
+  });
+  sortRecords();
+  renderMetrics();
+  renderTable();
+  renderSummary();
+}
+
+window.clearFilters = function() {
+  ['f-site','f-dow','f-vtype','f-service'].forEach(id=>document.getElementById(id).value='');
+  ['f-date-from','f-date-to','f-vnum'].forEach(id=>document.getElementById(id).value='');
+  applyFilters();
+}
+
+window.sortBy = function(field) {
+  if(sortField===field) sortDir*=-1; else { sortField=field; sortDir=-1; }
+  document.querySelectorAll('[id^="sort-"]').forEach(el=>el.textContent='');
+  const el=document.getElementById('sort-'+field);
+  if(el) el.textContent=sortDir===1?' ↑':' ↓';
+  sortRecords();
+  renderTable();
+}
+
+function sortRecords() {
+  filtered.sort((a,b)=>{
+    let av=a[sortField]||'', bv=b[sortField]||'';
+    if(sortField==='total'){av=parseFloat(av)||0;bv=parseFloat(bv)||0;}
+    if(av<bv) return -sortDir;
+    if(av>bv) return sortDir;
+    return 0;
+  });
+}
+
+function renderMetrics() {
+  const total=filtered.reduce((s,r)=>s+(r.total||0),0);
+  const dates=[...new Set(filtered.map(r=>r.date))];
+  const sites=[...new Set(filtered.map(r=>r.site).filter(Boolean))];
+  document.getElementById('m-total').textContent=filtered.length;
+  document.getElementById('m-billed').textContent='$'+total.toFixed(2);
+  document.getElementById('m-days').textContent=dates.length;
+  document.getElementById('m-sites').textContent=sites.length;
+  document.getElementById('record-count').textContent=filtered.length;
+}
+
+function renderTable() {
+  const tbody=document.getElementById('records-body');
+  if(!filtered.length){tbody.innerHTML='<tr><td colspan="10" class="empty">No records match your filters</td></tr>';return;}
+  tbody.innerHTML=filtered.map(r=>{
+    const svcs=Object.values(r.services||{}).map(s=>`<span class="service-tag">${s.name}</span>`).join('');
+    const photos=r.photos&&r.photos.length?`<button class="btn sm" onclick="openPhotos('${r.id}')">${r.photos.length} photo${r.photos.length!==1?'s':''}</button>`:'<span style="color:var(--text3);font-size:12px">—</span>';
+    return `<tr>
+      <td>${r.date}</td>
+      <td>${r.dayOfWeek||'—'}</td>
+      <td>${r.site||'—'}</td>
+      <td><strong>${r.vehicleNum||'—'}</strong></td>
+      <td>${r.vehicleType||'—'}</td>
+      <td>${r.licensePlate||'—'}</td>
+      <td>${svcs||'<span style="color:var(--text3)">—</span>'}</td>
+      <td><strong>$${(r.total||0).toFixed(2)}</strong></td>
+      <td>${photos}</td>
+      <td style="max-width:150px;font-size:12px;color:var(--text3)">${r.notes||'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderSummary() {
+  // Services breakdown
+  const svcCounts={};
+  filtered.forEach(r=>Object.entries(r.services||{}).forEach(([k,v])=>{
+    if(!svcCounts[k]) svcCounts[k]={name:v.name,count:0,total:0};
+    svcCounts[k].count++;
+    svcCounts[k].total+=v.cost||0;
+  }));
+  const maxSvc=Math.max(...Object.values(svcCounts).map(s=>s.count),1);
+  document.getElementById('service-summary').innerHTML=Object.entries(svcCounts).sort((a,b)=>b[1].count-a[1].count).map(([k,v])=>`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <div style="width:160px;font-size:13px;color:var(--text2)">${v.name}</div>
+      <div class="chart-bar" style="width:${Math.round(v.count/maxSvc*300)}px"><span style="font-size:12px;color:var(--blue-text);white-space:nowrap">${v.count}x · $${v.total.toFixed(2)}</span></div>
+    </div>`).join('')||'<div class="empty">No data</div>';
+
+  // Day of week
+  const dowCounts={};
+  filtered.forEach(r=>{const d=r.dayOfWeek||'Unknown';if(!dowCounts[d])dowCounts[d]={count:0,total:0};dowCounts[d].count++;dowCounts[d].total+=r.total||0;});
+  const dows=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const maxDow=Math.max(...Object.values(dowCounts).map(d=>d.count),1);
+  document.getElementById('dow-summary').innerHTML=dows.filter(d=>dowCounts[d]).map(d=>`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <div style="width:100px;font-size:13px;color:var(--text2)">${d}</div>
+      <div class="chart-bar" style="width:${Math.round(dowCounts[d].count/maxDow*300)}px;background:#eaf3de"><span style="font-size:12px;color:var(--green-text);white-space:nowrap">${dowCounts[d].count} vehicles · $${dowCounts[d].total.toFixed(2)}</span></div>
+    </div>`).join('')||'<div class="empty">No data</div>';
+
+  // By site
+  const siteCounts={};
+  filtered.forEach(r=>{const s=r.site||'Unknown';if(!siteCounts[s])siteCounts[s]={count:0,total:0};siteCounts[s].count++;siteCounts[s].total+=r.total||0;});
+  const maxSite=Math.max(...Object.values(siteCounts).map(s=>s.count),1);
+  document.getElementById('site-summary').innerHTML=Object.entries(siteCounts).sort((a,b)=>b[1].count-a[1].count).map(([s,v])=>`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <div style="width:120px;font-size:13px;color:var(--text2)">${s}</div>
+      <div class="chart-bar" style="width:${Math.round(v.count/maxSite*300)}px;background:var(--amber-bg)"><span style="font-size:12px;color:var(--amber-text);white-space:nowrap">${v.count} vehicles · $${v.total.toFixed(2)}</span></div>
+    </div>`).join('')||'<div class="empty">No data</div>';
+}
+
+window.openPhotos = function(id) {
+  const record=allRecords.find(r=>r.id===id);
+  if(!record||!record.photos||!record.photos.length) return;
+  const modal=document.getElementById('modal-content');
+  modal.innerHTML=`
+    <h3 style="margin-bottom:0.5rem">Vehicle ${record.vehicleNum} — ${record.date}</h3>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:1rem">${record.site||''} · ${record.vehicleType} · ${Object.values(record.services||{}).map(s=>s.name).join(', ')}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">
+      ${record.photos.map(p=>`
+        <div>
+          <img src="${p.src}" style="width:100%;border-radius:8px;cursor:pointer" onclick="window.open(this.src,'_blank')">
+          <div style="font-size:12px;color:var(--text2);margin-top:4px;text-align:center">${p.type}${p.caption?' · '+p.caption:''}</div>
+        </div>`).join('')}
+    </div>`;
+  document.getElementById('photo-modal').style.display='flex';
+}
+
+window.closeModal = function(e) {
+  if(!e||e.target===document.getElementById('photo-modal')) document.getElementById('photo-modal').style.display='none';
+}
+
+window.toggleView = function(v) {
+  currentView=v;
+  document.getElementById('view-table').style.display=v==='table'?'block':'none';
+  document.getElementById('view-summary').style.display=v==='summary'?'block':'none';
+  document.getElementById('btn-table').style.background=v==='table'?'var(--blue)':'';
+  document.getElementById('btn-table').style.color=v==='table'?'#fff':'';
+  document.getElementById('btn-summary').style.background=v==='summary'?'var(--blue)':'';
+  document.getElementById('btn-summary').style.color=v==='summary'?'#fff':'';
+}
+
+window.exportCSV = function() {
+  const rows=[['Date','Day of Week','Site','Vehicle #','Vehicle Type','License Plate','Services','Total','Notes']];
+  filtered.forEach(r=>rows.push([
+    r.date, r.dayOfWeek||'', r.site||'', r.vehicleNum||'', r.vehicleType||'', r.licensePlate||'',
+    Object.values(r.services||{}).map(s=>s.name).join(' | '),
+    '$'+(r.total||0).toFixed(2), r.notes||''
+  ]));
+  const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download=currentCustomer+'_fleet_service_'+new Date().toISOString().split('T')[0]+'.csv';
+  a.click();
+}
+
+// Check session on load
+const session=localStorage.getItem('ng-portal-session');
+if(session){
+  try{
+    const {customer,pin}=JSON.parse(session);
+    if(CUSTOMER_PINS[customer]===pin){currentCustomer=customer;showApp();}
+    else document.getElementById('login-screen').style.display='flex';
+  }catch(e){document.getElementById('login-screen').style.display='flex';}
+} else {
+  document.getElementById('login-screen').style.display='flex';
+}
+</script>
+</body>
+</html>

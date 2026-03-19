@@ -86,7 +86,7 @@ tr:hover td{background:var(--bg2)}
       <input id="login-pin" type="password" placeholder="Enter your PIN" style="font-size:15px;padding:10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
     <button onclick="doLogin()" id="login-btn" style="width:100%;padding:12px;font-size:15px;font-weight:500;background:var(--blue);color:#fff;border:none;border-radius:var(--radius);cursor:pointer">Sign in</button>
-    <div style="margin-top:1rem;font-size:12px;color:var(--text3);text-align:center">Contact Nitty Gritty Powerwashing for your PIN<br>(817) 851-5140 · lwallace@nittygrittypowerwashing.com</div>
+    <div style="margin-top:1rem;font-size:12px;color:var(--text3);text-align:center">Contact Nitty Gritty Powerwashing for your PIN<br>(817) 851-5140 · <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="09657e686565686a6c4967607d7d706e7b607d7d7079667e6c7b7e687a6160676e276a6664">[email&#160;protected]</a></div>
   </div>
 </div>
 
@@ -201,7 +201,7 @@ tr:hover td{background:var(--bg2)}
   </div>
 </div>
 
-<script type="module">
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getFirestore, collection, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
@@ -260,12 +260,19 @@ function showApp() {
 }
 
 function startListener() {
+  let allPhotos = [];
   onSnapshot(collection(db,'fleet_records'), snap => {
     allRecords = snap.docs.map(d=>({id:d.id,...d.data()})).filter(r=>r.customer===currentCustomer);
     populateFilterOptions();
     applyFilters();
     document.getElementById('last-updated').textContent='Updated '+new Date().toLocaleTimeString();
   });
+  onSnapshot(collection(db,'fleet_photos'), snap => {
+    allPhotos = snap.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.customer===currentCustomer);
+  });
+  window.getPhotosForRecord = function(recordId) {
+    return allPhotos.filter(p=>p.recordId===recordId);
+  };
 }
 
 function populateFilterOptions() {
@@ -346,7 +353,7 @@ function renderTable() {
   if(!filtered.length){tbody.innerHTML='<tr><td colspan="10" class="empty">No records match your filters</td></tr>';return;}
   tbody.innerHTML=filtered.map(r=>{
     const svcs=Object.values(r.services||{}).map(s=>`<span class="service-tag">${s.name}</span>`).join('');
-    const photos=r.photos&&r.photos.length?`<button class="btn sm" onclick="openPhotos('${r.id}')">${r.photos.length} photo${r.photos.length!==1?'s':''}</button>`:'<span style="color:var(--text3);font-size:12px">—</span>';
+    const photoCount=r.photoCount||0;const photos=photoCount>0?`<button class="btn sm" onclick="openPhotos('${r.id}')">${photoCount} photo${photoCount!==1?'s':''}</button>`:'<span style="color:var(--text3);font-size:12px">—</span>';
     return `<tr>
       <td>${r.date}</td>
       <td>${r.dayOfWeek||'—'}</td>
@@ -401,13 +408,15 @@ function renderSummary() {
 
 window.openPhotos = function(id) {
   const record=allRecords.find(r=>r.id===id);
-  if(!record||!record.photos||!record.photos.length) return;
+  if(!record) return;
+  const photos = window.getPhotosForRecord ? window.getPhotosForRecord(id) : [];
+  if(!photos.length) { alert('No photos found for this vehicle record.'); return; }
   const modal=document.getElementById('modal-content');
   modal.innerHTML=`
     <h3 style="margin-bottom:0.5rem">Vehicle ${record.vehicleNum} — ${record.date}</h3>
     <div style="font-size:13px;color:var(--text2);margin-bottom:1rem">${record.site||''} · ${record.vehicleType} · ${Object.values(record.services||{}).map(s=>s.name).join(', ')}</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">
-      ${record.photos.map(p=>`
+      ${photos.map(p=>`
         <div>
           <img src="${p.src}" style="width:100%;border-radius:8px;cursor:pointer" onclick="window.open(this.src,'_blank')">
           <div style="font-size:12px;color:var(--text2);margin-top:4px;text-align:center">${p.type}${p.caption?' · '+p.caption:''}</div>
@@ -450,11 +459,3 @@ if(session){
   try{
     const {customer,pin}=JSON.parse(session);
     if(CUSTOMER_PINS[customer]===pin){currentCustomer=customer;showApp();}
-    else document.getElementById('login-screen').style.display='flex';
-  }catch(e){document.getElementById('login-screen').style.display='flex';}
-} else {
-  document.getElementById('login-screen').style.display='flex';
-}
-</script>
-</body>
-</html>

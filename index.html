@@ -85,7 +85,7 @@ tr:hover td{background:var(--bg2)}
       <label style="font-size:13px;font-weight:500;color:var(--text2)">Access PIN</label>
       <input id="login-pin" type="password" placeholder="Enter your PIN" style="font-size:15px;padding:10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
-    <button onclick="doLogin()" id="login-btn" style="width:100%;padding:12px;font-size:15px;font-weight:500;background:var(--blue);color:#fff;border:none;border-radius:var(--radius);cursor:pointer">Sign in</button>
+    <button id="login-btn" style="width:100%;padding:12px;font-size:15px;font-weight:500;background:var(--blue);color:#fff;border:none;border-radius:var(--radius);cursor:pointer">Sign in</button>
     <div style="margin-top:1rem;font-size:12px;color:var(--text3);text-align:center">Contact Nitty Gritty Powerwashing for your PIN<br>(817) 851-5140 · <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="09657e686565686a6c4967607d7d706e7b607d7d7079667e6c7b7e687a6160676e276a6664">[email&#160;protected]</a></div>
   </div>
 </div>
@@ -452,6 +452,11 @@ window.exportCSV = function() {
   a.download=currentCustomer+'_fleet_service_'+new Date().toISOString().split('T')[0]+'.csv';
   a.click();
 }
+
+// Wire up login button and enter key
+document.getElementById('login-btn').addEventListener('click', window.doLogin);
+document.getElementById('login-pin').addEventListener('keydown', function(e){ if(e.key==='Enter') window.doLogin(); });
+document.getElementById('login-customer').addEventListener('keydown', function(e){ if(e.key==='Enter') window.doLogin(); });
 
 // Check session on load
 const session=localStorage.getItem('ng-portal-session');

@@ -204,6 +204,17 @@ tr:hover td{background:var(--bg2)}
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
+// Polyfills so onclick HTML attributes work before async code loads
+window._doLogin = function() { if(window._doLogin) window._doLogin(); else alert('Still loading, please wait a moment and try again.'); };
+window._doLogout = function() { if(window._doLogout) window._doLogout(); };
+window._applyFilters = function() { if(window._applyFilters) window._applyFilters(); };
+window._clearFilters = function() { if(window._clearFilters) window._clearFilters(); };
+window.sortBy = function(a) { if(window._sortBy) window._sortBy(a); };
+window.openPhotos = function(a) { if(window._openPhotos) window._openPhotos(a); };
+window.closeModal = function(a) { if(window._closeModal) window._closeModal(a); };
+window.toggleView = function(a) { if(window._toggleView) window._toggleView(a); };
+window._exportCSV = function() { if(window._exportCSV) window._exportCSV(); };
+
 
 const firebaseConfig = {
   apiKey: "AIzaSyCMNLAJUfR3V7yMligwQaSJdXxCcqbPrY4",
@@ -231,7 +242,7 @@ let sortField = 'date';
 let sortDir = -1;
 let currentView = 'table';
 
-window.doLogin = function() {
+window._doLogin = function() {
   const customer = document.getElementById('login-customer').value;
   const pin = document.getElementById('login-pin').value.trim();
   if (!customer) { showErr('Please select your organization'); return; }
@@ -244,7 +255,7 @@ window.doLogin = function() {
 
 function showErr(msg) { const el=document.getElementById('login-error'); el.textContent=msg; el.style.display='block'; }
 
-window.doLogout = function() {
+window._doLogout = function() {
   currentCustomer=null; localStorage.removeItem('ng-portal-session');
   document.getElementById('main-app').style.display='none';
   document.getElementById('login-screen').style.display='flex';
@@ -270,7 +281,7 @@ function startListener() {
   db.collection('fleet_photos').onSnapshot(snap => {
     allPhotos = snap.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.customer===currentCustomer);
   });
-  window.getPhotosForRecord = function(recordId) {
+  window._getPhotosForRecord = function(recordId) {
     return allPhotos.filter(p=>p.recordId===recordId);
   };
 }
@@ -288,7 +299,7 @@ function populateFilterOptions() {
   fVtype.value=curVtype;
 }
 
-window.applyFilters = function() {
+window._applyFilters = function() {
   const fSite=document.getElementById('f-site').value;
   const fDow=document.getElementById('f-dow').value;
   const fVtype=document.getElementById('f-vtype').value;
@@ -312,13 +323,13 @@ window.applyFilters = function() {
   renderSummary();
 }
 
-window.clearFilters = function() {
+window._clearFilters = function() {
   ['f-site','f-dow','f-vtype','f-service'].forEach(id=>document.getElementById(id).value='');
   ['f-date-from','f-date-to','f-vnum'].forEach(id=>document.getElementById(id).value='');
   applyFilters();
 }
 
-window.sortBy = function(field) {
+window._sortBy = function(field) {
   if(sortField===field) sortDir*=-1; else { sortField=field; sortDir=-1; }
   document.querySelectorAll('[id^="sort-"]').forEach(el=>el.textContent='');
   const el=document.getElementById('sort-'+field);
@@ -406,10 +417,10 @@ function renderSummary() {
     </div>`).join('')||'<div class="empty">No data</div>';
 }
 
-window.openPhotos = function(id) {
+window._openPhotos = function(id) {
   const record=allRecords.find(r=>r.id===id);
   if(!record) return;
-  const photos = window.getPhotosForRecord ? window.getPhotosForRecord(id) : [];
+  const photos = window.getPhotosForRecord ? window._getPhotosForRecord ? window._getPhotosForRecord(id) : [] : [];
   if(!photos.length) { alert('No photos found for this vehicle record.'); return; }
   const modal=document.getElementById('modal-content');
   modal.innerHTML=`
@@ -425,11 +436,11 @@ window.openPhotos = function(id) {
   document.getElementById('photo-modal').style.display='flex';
 }
 
-window.closeModal = function(e) {
+window._closeModal = function(e) {
   if(!e||e.target===document.getElementById('photo-modal')) document.getElementById('photo-modal').style.display='none';
 }
 
-window.toggleView = function(v) {
+window._toggleView = function(v) {
   currentView=v;
   document.getElementById('view-table').style.display=v==='table'?'block':'none';
   document.getElementById('view-summary').style.display=v==='summary'?'block':'none';
@@ -439,7 +450,7 @@ window.toggleView = function(v) {
   document.getElementById('btn-summary').style.color=v==='summary'?'#fff':'';
 }
 
-window.exportCSV = function() {
+window._exportCSV = function() {
   const rows=[['Date','Day of Week','Site','Vehicle #','Vehicle Type','License Plate','Services','Total','Notes']];
   filtered.forEach(r=>rows.push([
     r.date, r.dayOfWeek||'', r.site||'', r.vehicleNum||'', r.vehicleType||'', r.licensePlate||'',
@@ -453,8 +464,8 @@ window.exportCSV = function() {
   a.click();
 }
 
-// Wire up login button and enter key
-document.getElementById('login-btn').addEventListener('click', window.doLogin);
+// Wire up login button and enter key  
+document.getElementById('login-btn').addEventListener('click', function(){ window.doLogin(); });
 document.getElementById('login-pin').addEventListener('keydown', function(e){ if(e.key==='Enter') window.doLogin(); });
 document.getElementById('login-customer').addEventListener('keydown', function(e){ if(e.key==='Enter') window.doLogin(); });
 

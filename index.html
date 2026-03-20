@@ -201,9 +201,9 @@ tr:hover td{background:var(--bg2)}
   </div>
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, collection, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
 
 const firebaseConfig = {
   apiKey: "AIzaSyCMNLAJUfR3V7yMligwQaSJdXxCcqbPrY4",
@@ -221,8 +221,8 @@ const CUSTOMER_PINS = {
   Other: '9900'
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
 let currentCustomer = null;
 let allRecords = [];
@@ -261,13 +261,13 @@ function showApp() {
 
 function startListener() {
   let allPhotos = [];
-  onSnapshot(collection(db,'fleet_records'), snap => {
+  db.collection('fleet_records').onSnapshot(snap => {
     allRecords = snap.docs.map(d=>({id:d.id,...d.data()})).filter(r=>r.customer===currentCustomer);
     populateFilterOptions();
     applyFilters();
     document.getElementById('last-updated').textContent='Updated '+new Date().toLocaleTimeString();
   });
-  onSnapshot(collection(db,'fleet_photos'), snap => {
+  db.collection('fleet_photos').onSnapshot(snap => {
     allPhotos = snap.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.customer===currentCustomer);
   });
   window.getPhotosForRecord = function(recordId) {
